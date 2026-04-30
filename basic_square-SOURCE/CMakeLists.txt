@@ -14,13 +14,6 @@ include(${Geant4_USE_FILE})
 add_definitions(-DG4UI_USE)
 add_definitions(-DG4VIS_USE)
 
-# Diagnostic output
-message(STATUS "Geant4_INCLUDE_DIRS: ${Geant4_INCLUDE_DIRS}")
-message(STATUS "Geant4_DEFINITIONS: ${Geant4_DEFINITIONS}")
-message(STATUS "Geant4_UI_DRIVERS: ${Geant4_UI_DRIVERS}")
-message(STATUS "Geant4_VIS_DRIVERS: ${Geant4_VIS_DRIVERS}")
-message(STATUS "Geant4_USE_FILE: ${Geant4_USE_FILE}")
-
 include_directories(${PROJECT_SOURCE_DIR}/include)
 
 # We presume the existence of three directories

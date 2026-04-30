@@ -24,28 +24,48 @@
 // ********************************************************************
 //
 //
+//
+//---------------------------------------------------------------------------
+//
+// ClassName:   G4OpticalPhysics
+//
+// Author:      P.Gumplinger 30.09.2009
+//
+// Modified:    P.Gumplinger 29.09.2011
+//              (based on code from I. Hrivnacova)
+//
+//---------------------------------------------------------------------------
+//
+// This class provides construction of default optical physics
+//
+
+#ifndef G4OpticalPhysics_h
+#define G4OpticalPhysics_h 1
+
+#include "G4VPhysicsConstructor.hh"
+#include "G4OpticalParameters.hh"
+
 //....oooOO0OOooo........oooOO0OOooo........oooOO0OOooo........oooOO0OOooo......
-//....oooOO0OOooo........oooOO0OOooo........oooOO0OOooo........oooOO0OOooo......
 
-#ifndef PhysicsList_h
-#define PhysicsList_h 1
-
-#include "G4VModularPhysicsList.hh"
-#include "globals.hh"
-
-//....oooOO0OOooo........oooOO0OOooo........oooOO0OOooo........oooOO0OOooo......
-
-class PhysicsList: public G4VModularPhysicsList
+class G4OpticalPhysics : public G4VPhysicsConstructor
 {
-public:
-  PhysicsList();
- ~PhysicsList();
+ public:
+  G4OpticalPhysics(G4int verbose = 0, const G4String& name = "Optical");
+  ~G4OpticalPhysics() override = default;
+  void PrintStatistics() const;
 
-public:
-  virtual void ConstructParticle();
+  G4OpticalPhysics(const G4OpticalPhysics& right) = delete;
+  G4OpticalPhysics& operator=(const G4OpticalPhysics& right) = delete;
+
+ protected:
+  // construct particle and physics
+  void ConstructParticle() override;
+  void ConstructProcess() override;
+
+ private:
+  void PrintWarning(G4ExceptionDescription&) const;
 };
 
 //....oooOO0OOooo........oooOO0OOooo........oooOO0OOooo........oooOO0OOooo......
 
-#endif
-
+#endif  // G4OpticalPhysics_h

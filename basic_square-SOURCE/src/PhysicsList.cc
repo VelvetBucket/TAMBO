@@ -2,48 +2,93 @@
 
 // Select some of the many physics constructors in Geant4
 // These are just examples:
-#include <G4HadronPhysicsFTFP_BERT.hh>
-#include <G4EmStandardPhysics_option4.hh>
+#include "G4DecayPhysics.hh"
+#include "G4RadioactiveDecayPhysics.hh"
+
+#include "G4OpticalPhysics.hh"
+#include "G4OpticalParameters.hh"
+
+#include "G4HadronElasticPhysicsHP.hh"
+#include "G4HadronPhysicsFTFP_BERT_HP.hh"
+#include "G4HadronPhysicsQGSP_BIC_HP.hh"
+#include "G4HadronInelasticQBBC.hh"
+#include "G4HadronPhysicsINCLXX.hh"
+#include "G4IonElasticPhysics.hh"
+#include "G4IonPhysics.hh"
+#include "G4IonINCLXXPhysics.hh"
+
+// particles
+
+#include "G4BosonConstructor.hh"
+#include "G4LeptonConstructor.hh"
+#include "G4MesonConstructor.hh"
+#include "G4BosonConstructor.hh"
+#include "G4BaryonConstructor.hh"
+#include "G4IonConstructor.hh"
+#include "G4ShortLivedConstructor.hh"
 
 // You will probably want this:
 #include <G4StepLimiterPhysics.hh>
 
-PhysicsList::PhysicsList()
+PhysicsList::PhysicsList():G4VModularPhysicsList()
 {
-	// Here, you can (for example):
+  G4int verb = 0;
+  SetVerboseLevel(verb);
+    
+  // Decay
+  RegisterPhysics(new G4DecayPhysics());
+            
+  // Hadron Elastic scattering
+  RegisterPhysics( new G4HadronElasticPhysicsHP(verb) );
+  
+  // Hadron Inelastic physics
+  RegisterPhysics( new G4HadronPhysicsFTFP_BERT_HP(verb));
+  
+  // Ion Elastic scattering
+  RegisterPhysics( new G4IonElasticPhysics(verb));
+      
+  // Ion Inelastic physics
+  RegisterPhysics( new G4IonPhysics(verb));
 
-	//
-	// a) add physics constructors
-	RegisterPhysics(new G4HadronPhysicsFTFP_BERT());
-	RegisterPhysics(new G4EmStandardPhysics_option4());
-	RegisterPhysics(new G4StepLimiterPhysics());
+  // Optical Physics
+  G4OpticalPhysics* opticalPhysics = new G4OpticalPhysics();
+  G4OpticalParameters* opticalParams = G4OpticalParameters::Instance();
+  
+  RegisterPhysics( opticalPhysics );
+  
+  opticalParams->SetWLSTimeProfile("delta");
 
-	// b) set a reference physics list and use it
-	// = create a pointer and reuse it in other methods
+  //opticalParams->SetScintillationYieldFactor(1.0);
+  //opticalParams->SetScintillationExcitationRatio(0.0);
+
+  opticalParams->SetCerenkovMaxPhotonsPerStep(100);
+  opticalParams->SetCerenkovMaxBetaChange(10.0);
+
+  opticalParams->SetCerenkovTrackSecondariesFirst(true);
+  opticalParams->SetScintTrackSecondariesFirst(true);
 }
+
+PhysicsList::~PhysicsList()
+{ }
 
 void PhysicsList::ConstructParticle()
 {
-	// Call parent method (using the constructors)
-	G4VModularPhysicsList::ConstructParticle();
-	
-	// OR use the physics list
-	// OR define some particles yourself
-}
 
-void PhysicsList::ConstructProcess()
-{
-	// Call parent method (using the constructors)
-	G4VModularPhysicsList::ConstructProcess();
+  G4BosonConstructor  pBosonConstructor;
+  pBosonConstructor.ConstructParticle();
 
-	// OR use the physics list
-	// OR define some processes yourself
-}
+  G4LeptonConstructor pLeptonConstructor;
+  pLeptonConstructor.ConstructParticle();
 
-void PhysicsList::SetCuts()
-{
-	// Call parent method (using the constructors)
-	G4VModularPhysicsList::SetCuts();
-	
-	// Add your specifics
+  G4MesonConstructor pMesonConstructor;
+  pMesonConstructor.ConstructParticle();
+
+  G4BaryonConstructor pBaryonConstructor;
+  pBaryonConstructor.ConstructParticle();
+
+  G4IonConstructor pIonConstructor;
+  pIonConstructor.ConstructParticle();
+
+  G4ShortLivedConstructor pShortLivedConstructor;
+  pShortLivedConstructor.ConstructParticle();  
 }
