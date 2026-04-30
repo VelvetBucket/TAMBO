@@ -9,10 +9,10 @@
 #
 #
 # Change the default number of threads (in multi-threaded mode)
-#/run/numberOfThreads 4
+#/run/numberOfThreads 20
 #
 # Initialize kernel
-/run/initialize
+#/run/initialize
 #
 # Visualization setting
 /control/execute macro/vis.mac

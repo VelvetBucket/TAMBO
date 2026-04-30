@@ -6,10 +6,8 @@
 class DetectorConstruction : public G4VUserDetectorConstruction
 {
 public:
-    G4VPhysicalVolume* Construct() override;
-
-    // Add the following, if you have fields / sensitive detectors
-    /* void ConstructSDandField() override; */    
+    virtual G4VPhysicalVolume* Construct();
+    virtual void ConstructSDandField();
 };
 
 #endif

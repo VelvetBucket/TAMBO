@@ -24,6 +24,7 @@
 #include "ActionInitialization.hh"
 #include "DetectorConstruction.hh"
 #include "PhysicsList.hh"
+#include "PhotonSD.hh" 
 
 using namespace std;
 
@@ -109,6 +110,8 @@ int main(int argc, char** argv)
         delete visManager;
     #endif
     delete runManager;
+    
+    PhotonSD::MergeFiles("my_experiment_photons", "my_experiment_photons_merged.csv");
     
     G4cout << "Program finished normally." << G4endl;
     return 0;
