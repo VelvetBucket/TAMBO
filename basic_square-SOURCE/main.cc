@@ -93,7 +93,7 @@ int main(int argc, char** argv)
         #ifdef G4UI_USE
             G4cout << "Starting interactive UI session..." << G4endl;
             G4UIExecutive* ui = new G4UIExecutive(argc, argv);
-            
+            UImanager->ApplyCommand("/control/execute macro/init_vis.mac");
             ui->SessionStart();
             delete ui;
         #else
