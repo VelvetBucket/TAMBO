@@ -1,0 +1,7 @@
+/gps/particle mu-
+/gps/energy 10 GeV
+/gps/direction 0 0 -1
+/gps/position 0 0 1 m
+/gps/polarization 0 0 1 cm
+/tracking/verbose 1
+/run/beamOn 100

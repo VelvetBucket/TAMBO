@@ -27,32 +27,23 @@
 # Draw coordinate axes:
 /vis/scene/add/axes 0 0 0 15 cm
 #
-# Draw smooth trajectories at end of event, showing trajectory points
-# as markers 2 pixels wide:
+# STORE TRAJECTORIES (this was missing!)
+/tracking/storeTrajectory 1
+
+# Draw trajectories - use drawByParticleID to show all particles
 /vis/scene/add/trajectories smooth
-/vis/modeling/trajectories/create/drawByCharge
-/vis/modeling/trajectories/drawByCharge-0/default/setDrawStepPts true
-/vis/modeling/trajectories/drawByCharge-0/default/setStepPtsSize 2
-# (if too many tracks cause core dump => /tracking/storeTrajectory 0)
-#
-# Draw hits at end of event:
-#/vis/scene/add/hits
-#
-# To draw only gammas:
-#/vis/filtering/trajectories/create/particleFilter
-#/vis/filtering/trajectories/particleFilter-0/add gamma
-#
-# To invert the above, drawing all particles except gammas,
-# keep the above two lines but also add:
-#/vis/filtering/trajectories/particleFilter-0/invert true
-#
-# Many other options are available with /vis/modeling and /vis/filtering.
-# For example, to select colour by particle ID:
-#/vis/modeling/trajectories/create/drawByParticleID
-#/vis/modeling/trajectories/drawByParticleID-0/set e- blue
-#
-# To superimpose all of the events from a given run:
-#/vis/scene/endOfEventAction accumulate
+/vis/modeling/trajectories/create/drawByParticleID
+
+# Configure trajectory drawing
+/vis/modeling/trajectories/drawByParticleID-0/default/setDrawStepPts true
+/vis/modeling/trajectories/drawByParticleID-0/default/setStepPtsSize 2
+
+# Set colors for different particles
+/vis/modeling/trajectories/drawByParticleID-0/set opticalphoton yellow
+/vis/modeling/trajectories/drawByParticleID-0/set gamma green
+/vis/modeling/trajectories/drawByParticleID-0/set e- red
+/vis/modeling/trajectories/drawByParticleID-0/set e+ blue
+/vis/modeling/trajectories/drawByParticleID-0/set mu- cyan
 #
 # Re-establish auto refreshing and verbosity:
 /vis/viewer/set/autoRefresh true
