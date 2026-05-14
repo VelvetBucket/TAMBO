@@ -48,6 +48,16 @@ void PhotonSD::Initialize(G4HCofThisEvent* hce)
 
 G4bool PhotonSD::ProcessHits(G4Step* step, G4TouchableHistory* history)
 {
+    
+    
+    
+    // Safety check
+    if (!fThreadData)
+    {
+        G4cerr << "ERROR: fThreadData is null in ProcessHits!" << G4endl;
+        return false;
+    }
+
     G4Track* track = step->GetTrack();
     G4ParticleDefinition* particle = track->GetDefinition();
     
@@ -55,6 +65,17 @@ G4bool PhotonSD::ProcessHits(G4Step* step, G4TouchableHistory* history)
     if (particle != G4OpticalPhoton::OpticalPhotonDefinition() && 
         particle != G4Gamma::GammaDefinition())
         return false;
+    
+    static G4int callCount = 0;
+    callCount++;
+    
+    if (callCount <= 10)
+    {
+        G4cout << "!!! ProcessHits called #" << callCount 
+               << " Particle: " << step->GetTrack()->GetDefinition()->GetParticleName()
+               << " Volume: " << step->GetPreStepPoint()->GetPhysicalVolume()->GetName()
+               << G4endl;
+    }
     
     G4StepPoint* preStep = step->GetPreStepPoint();
     G4ThreeVector position = preStep->GetPosition();

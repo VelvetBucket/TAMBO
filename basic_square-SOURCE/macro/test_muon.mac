@@ -2,13 +2,16 @@
 /gps/particle mu-
 /gps/energy 1 GeV          # High enough to be MIP (minimum ionizing particle)
 /gps/direction 0 0 -1
-/gps/position 0 0 5 cm
+/gps/position 0 0 1 m
 
 # Enable tracking of optical photons
 /tracking/storeTrajectory 1
 
 # Run verbose to see what's happening
 /run/verbose 1
-/tracking/verbose 0        # Set to 1 to see every step
+/tracking/verbose 0
 
 /run/beamOn 10
+
+/vis/enable
+/vis/viewer/flush

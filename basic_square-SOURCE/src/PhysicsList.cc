@@ -16,6 +16,7 @@
 #include "G4IonElasticPhysics.hh"
 #include "G4IonPhysics.hh"
 #include "G4IonINCLXXPhysics.hh"
+#include "G4EmStandardPhysics.hh"  
 
 // particles
 
@@ -34,7 +35,10 @@ PhysicsList::PhysicsList():G4VModularPhysicsList()
 {
   G4int verb = 0;
   SetVerboseLevel(verb);
-    
+  
+  // EM physics
+  RegisterPhysics(new G4EmStandardPhysics());
+  
   // Decay
   RegisterPhysics(new G4DecayPhysics());
             
@@ -66,6 +70,16 @@ PhysicsList::PhysicsList():G4VModularPhysicsList()
 
   opticalParams->SetCerenkovTrackSecondariesFirst(true);
   opticalParams->SetScintTrackSecondariesFirst(true);
+  
+  // DEBUG: Print all registered physics
+  G4cout << "=== Registered Physics ===" << G4endl;
+  G4cout << "Number of physics: " << 7 << G4endl;
+  for (G4int i = 0; i < 7; i++)
+  {
+      G4cout << "  " << i << ": " << GetPhysics(i)->GetPhysicsName() << G4endl;
+  }
+  G4cout << "=========================" << G4endl;
+
 }
 
 PhysicsList::~PhysicsList()
