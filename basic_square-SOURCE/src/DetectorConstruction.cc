@@ -15,6 +15,10 @@
 #include "G4SDManager.hh"
 #include "G4LogicalVolumeStore.hh"
 
+#include "G4OpticalSurface.hh"
+#include "G4LogicalBorderSurface.hh"
+#include "G4LogicalSkinSurface.hh"
+
 G4VPhysicalVolume* DetectorConstruction::Construct() 
 {
   // Materials
@@ -22,21 +26,18 @@ G4VPhysicalVolume* DetectorConstruction::Construct()
 
   G4Material* air = nist->FindOrBuildMaterial("G4_AIR");
   G4Material* silicon = nist->FindOrBuildMaterial("G4_Si");
+  G4Material* aluminum = nist->FindOrBuildMaterial("G4_Al");
   
+  // The plastic scintillator:
   G4double a, z, density;
-  G4int nelements;
+  G4int nelements;G4int ncomponents;
+  G4double fractionmass;
+  
   G4Element* H  = new G4Element("Hydrogen","H",  z= 1, a=   1.01*g/mole);
   G4Element* N = new G4Element("Nitrogen", "N", z=7 , a=14.01*g/mole);
   G4Element* O = new G4Element("Oxygen"  , "O", z=8 , a=16.00*g/mole);
   G4Element* C = new G4Element("Carbon"  , "C", z=6 , a=12.01*g/mole);
   
-
-  G4int ncomponents;
-  G4double fractionmass;
-
-  // The plastic scintillator:
-  //
-
   G4Material* scintillator = new G4Material("PLASTIC_SC", density = 1.043*g/cm3, ncomponents=2);
   scintillator->AddElement(H, fractionmass=0.077418);
   scintillator->AddElement(C, fractionmass=0.922582);
@@ -152,6 +153,36 @@ G4VPhysicalVolume* DetectorConstruction::Construct()
   G4Box* detectorBox = new G4Box("detectorBox",detectorX/2.,detectorY/2.,detectorZ/2.);
   G4LogicalVolume* detectorLog = new G4LogicalVolume(detectorBox, silicon, "detectorLog");
   G4VPhysicalVolume* detectorPhys = new G4PVPlacement(0, G4ThreeVector(0.,0., -1.*(plasticZ + detectorZ)/2.), detectorLog, "detector", worldLog, false, 0); 
+  
+  // Adding Aluminum wrap 
+  // Reflector properties
+  G4MaterialPropertiesTable* alProps = new G4MaterialPropertiesTable();
+  G4double energy[2] = {2.0*eV, 4.0*eV};
+  G4double reflectivity[2] = {0.90, 0.90};
+  alProps->AddProperty("REFLECTIVITY", energy, reflectivity, 2);
+  
+  G4OpticalSurface* alReflector = new G4OpticalSurface("AlReflector");
+  alReflector->SetType(dielectric_metal);
+  alReflector->SetModel(unified);
+  alReflector->SetFinish(polished);
+  alReflector->SetMaterialPropertiesTable(alProps);
+  
+  // Apply to scintillator (ALL faces)
+  new G4LogicalSkinSurface("ScintSkin", plasticLog, alReflector);
+  
+  // Override detector interface with perfect transmission
+  G4MaterialPropertiesTable* detProps = new G4MaterialPropertiesTable();
+  G4double transmittance[2] = {1.0, 1.0};
+  detProps->AddProperty("TRANSMITTANCE", energy, transmittance, 2);
+  
+  G4OpticalSurface* detSurface = new G4OpticalSurface("DetSurface");
+  detSurface->SetType(dielectric_dielectric);
+  detSurface->SetModel(unified);
+  detSurface->SetFinish(polished);
+  detSurface->SetMaterialPropertiesTable(detProps);
+  
+  // This OVERRIDES the skin at the scintillator-detector boundary
+  new G4LogicalBorderSurface("ScintDetBorder", plasticPhys, detectorPhys, detSurface);
   
   // Return the world volume
   return worldPhys;

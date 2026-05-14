@@ -19,7 +19,7 @@ PhotonSD::PhotonSD(const G4String& name, const G4String& outputPrefix)
       fOutputPrefix(outputPrefix)
 {
     G4cout << "PhotonSD initialized (per-thread buffered CSV)" << G4endl;
-    G4cout << "  Threads: " << G4Threading::G4GetNumberOfCores() << G4endl;
+    //G4cout << "  Threads: " << G4Threading::G4GetNumberOfCores() << G4endl;
     G4cout << "  Buffer size: " << fBufferSize << " hits" << G4endl;
 }
 
@@ -134,14 +134,27 @@ void PhotonSD::FlushThreadBuffer(G4int threadID)
     if (!fThreadData || fThreadData->buffer.tellp() == 0)
         return;
     
-    // Build filename with thread ID and timestamp
+    // Build filename with thread ID
     std::ostringstream filename;
     filename << fOutputPrefix << "_t" << threadID << ".csv";
+    
+    // Check if file exists to determine if header is needed
+    bool fileExists = false;
+    {
+        std::ifstream checkFile(filename.str());
+        fileExists = checkFile.good();
+        checkFile.close();
+    }
     
     // Open file in append mode
     std::ofstream file(filename.str(), std::ios::app);
     if (file.is_open())
     {
+        // Write header if this is a NEW file (first time)
+        if (!fileExists)
+        {
+          file << "EventID,X_cm,Y_cm,Z_cm,Time_ns,Wavelength_nm,Energy_eV,Particle\n";
+        }
         file << fThreadData->buffer.str();
         file.close();
         
@@ -168,11 +181,12 @@ void PhotonSD::MergeFiles(const G4String& prefix, const G4String& outputFile)
     mergedFile << "EventID,X_cm,Y_cm,Z_cm,Time_ns,Wavelength_nm,Energy_eV,Particle\n";
     
     int filesMerged = 0;
+    std::vector<std::string> filesToDelete;  // Keep track of files
     
     for (int i = 0; i < 100; i++) {
         std::ostringstream filename;
-        filename << prefix << i << ".csv";
-        
+        filename << prefix << "_t" << i << ".csv";
+        //G4cout << filename.str() << G4endl;
         std::ifstream threadFile(filename.str());
         if (!threadFile.is_open()) {
             break;  // No more files
@@ -188,9 +202,20 @@ void PhotonSD::MergeFiles(const G4String& prefix, const G4String& outputFile)
         }
         
         threadFile.close();
+        filesToDelete.push_back(filename.str());  
         filesMerged++;
     }
     
     mergedFile.close();
     G4cout << "Merged " << filesMerged << " files into: " << outputFile << G4endl;
+    
+    // Delete thread files after successful merge
+    for (const auto& file : filesToDelete) {
+        if (std::remove(file.c_str()) == 0) {
+            G4cout << "Deleted: " << file << G4endl;
+        } else {
+            G4cerr << "Failed to delete: " << file << G4endl;
+        }
+    }
+    
 }

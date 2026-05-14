@@ -1,13 +1,8 @@
 #include <vector>
 
 // Select a proper single-/multithreaded run manager
-#ifdef G4MULTITHREADED
-    #include <G4MTRunManager.hh>
-    using RunManager = G4MTRunManager;
-#else
-    #include <G4RunManager.hh>
-    using RunManager = G4RunManager;
-#endif
+#include <G4MTRunManager.hh>
+#include <G4RunManager.hh>
 
 #ifdef G4VIS_USE
     #include <G4VisExecutive.hh>
@@ -61,9 +56,27 @@ int main(int argc, char** argv)
             }                      
         }
     }
+    
+    #ifdef G4MULTITHREADED
+      G4cout << "=== G4MULTITHREADED is defined ===" << G4endl;
+      auto runManager = new G4MTRunManager();
+      G4cout << "Using G4MTRunManager" << G4endl;
+    #else
+      G4cout << "=== G4MULTITHREADED is NOT defined ===" << G4endl;
+      auto runManager = new G4RunManager();
+      G4cout << "Using G4RunManager (sequential)" << G4endl;
+    #endif
 
-    auto runManager = new RunManager();
-
+    // Set number of threads BEFORE Initialize
+    #ifdef G4MULTITHREADED
+      G4int nThreads = G4Threading::G4GetNumberOfCores() - 1;
+      if (nThreads <= 0) {
+        nThreads = G4Threading::G4GetNumberOfCores();
+      }
+      runManager->SetNumberOfThreads(nThreads);
+      G4cout << "Number of threads set to: " << runManager->GetNumberOfThreads() << G4endl;
+    #endif
+    
     #ifdef G4VIS_USE
         G4VisManager* visManager = new G4VisExecutive("quiet");
         visManager->SetVerboseLevel(0);
