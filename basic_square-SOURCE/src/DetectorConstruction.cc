@@ -122,9 +122,9 @@ G4VPhysicalVolume* DetectorConstruction::Construct()
   std::reverse(PhotonEnergy_WLS_EM_core, PhotonEnergy_WLS_EM_core + NUMENTRIES3);
   std::reverse(WLS_EMISSION_core, WLS_EMISSION_core + NUMENTRIES3);
 
-  scintillator_mt->AddProperty("WLSABSLENGTH", PhotonEnergy_WLS_ABS_core, WLS_ABSLENGTH_core, NUMENTRIES2);
-  scintillator_mt->AddProperty("WLSCOMPONENT", PhotonEnergy_WLS_EM_core, WLS_EMISSION_core, NUMENTRIES3);
-  scintillator_mt->AddConstProperty("WLSTIMECONSTANT", 0.5*ns);
+  //scintillator_mt->AddProperty("WLSABSLENGTH", PhotonEnergy_WLS_ABS_core, WLS_ABSLENGTH_core, NUMENTRIES2);
+  //scintillator_mt->AddProperty("WLSCOMPONENT", PhotonEnergy_WLS_EM_core, WLS_EMISSION_core, NUMENTRIES3);
+  //scintillator_mt->AddConstProperty("WLSTIMECONSTANT", 0.5*ns);
   scintillator->SetMaterialPropertiesTable(scintillator_mt);
 
   // World construction
@@ -149,7 +149,7 @@ G4VPhysicalVolume* DetectorConstruction::Construct()
   // Silicon properties
   G4MaterialPropertiesTable* siliconBulk = new G4MaterialPropertiesTable();
   G4double energySi[2] = {2.0*eV, 4.0*eV};
-  G4double rindexSi[2] = {1.58, 1.58};
+  G4double rindexSi[2] = {3.9, 5.0};
   siliconBulk->AddProperty("RINDEX", energySi, rindexSi, 2);
   silicon->SetMaterialPropertiesTable(siliconBulk);
   
@@ -158,7 +158,7 @@ G4VPhysicalVolume* DetectorConstruction::Construct()
   G4double detectorZ = 0.25 * mm;
   
   G4Box* detectorBox = new G4Box("detectorBox",detectorX/2.,detectorY/2.,detectorZ/2.);
-  G4LogicalVolume* detectorLog = new G4LogicalVolume(detectorBox, scintillator, "detectorLog");
+  G4LogicalVolume* detectorLog = new G4LogicalVolume(detectorBox, silicon, "detectorLog");
   G4VPhysicalVolume* detectorPhys = new G4PVPlacement(0, G4ThreeVector(0.,0., -1.*(plasticZ + detectorZ)/2.), detectorLog, "detector", worldLog, false, 0); 
   
   // Adding Aluminum wrap 
