@@ -11,7 +11,7 @@
 /run/verbose 1
 /tracking/verbose 0
 
-/run/beamOn 1
+/run/beamOn 10000
 
 /vis/enable
 /vis/viewer/flush

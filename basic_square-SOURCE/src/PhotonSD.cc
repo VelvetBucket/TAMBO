@@ -103,7 +103,7 @@ G4bool PhotonSD::ProcessHits(G4Step* step, G4TouchableHistory* history)
                        << position.y()/cm << ","
                        << position.z()/cm << ","
                        << time/ns << ","
-                       << wavelength << ","
+                       << wavelength/nm << ","
                        << energy/eV << ","
                        << particleType << "\n";
     

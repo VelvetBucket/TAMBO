@@ -1,13 +1,13 @@
-/gps/particle opticalPhoton
+/process/optical/verbose 2
+/tracking/verbose 2
+/run/verbose 1
+
+/gps/particle opticalphoton
 /gps/energy 2.92 eV
-
 /gps/direction 0 0 -1
-/gps/position 0 0 1 m
-/gps/polarization 0 0 1
+/gps/position 0 0 1 cm 
 
-/tracking/verbose 1
-
-/run/beamOn 10
+/run/beamOn 1
 
 /vis/enable
 /vis/viewer/flush

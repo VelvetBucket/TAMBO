@@ -146,12 +146,19 @@ G4VPhysicalVolume* DetectorConstruction::Construct()
   G4VPhysicalVolume* plasticPhys = new G4PVPlacement(0, G4ThreeVector(), plasticLog, "plastic", worldLog, false, 0);
 
   //Adding SiPM square
+  // Silicon properties
+  G4MaterialPropertiesTable* siliconBulk = new G4MaterialPropertiesTable();
+  G4double energySi[2] = {2.0*eV, 4.0*eV};
+  G4double rindexSi[2] = {1.58, 1.58};
+  siliconBulk->AddProperty("RINDEX", energySi, rindexSi, 2);
+  silicon->SetMaterialPropertiesTable(siliconBulk);
+  
   G4double detectorX = 6 * mm;
   G4double detectorY = 6 * mm;
   G4double detectorZ = 0.25 * mm;
   
   G4Box* detectorBox = new G4Box("detectorBox",detectorX/2.,detectorY/2.,detectorZ/2.);
-  G4LogicalVolume* detectorLog = new G4LogicalVolume(detectorBox, silicon, "detectorLog");
+  G4LogicalVolume* detectorLog = new G4LogicalVolume(detectorBox, scintillator, "detectorLog");
   G4VPhysicalVolume* detectorPhys = new G4PVPlacement(0, G4ThreeVector(0.,0., -1.*(plasticZ + detectorZ)/2.), detectorLog, "detector", worldLog, false, 0); 
   
   // Adding Aluminum wrap 
@@ -167,11 +174,13 @@ G4VPhysicalVolume* DetectorConstruction::Construct()
   alReflector->SetFinish(polished);
   alReflector->SetMaterialPropertiesTable(alProps);
   
-  // Apply to scintillator (ALL faces)
-  new G4LogicalSkinSurface("ScintSkin", plasticLog, alReflector);
+  // Reflector: scintillator to world (covers all faces EXCEPT where detector is)
+  //new G4LogicalBorderSurface("Reflector", plasticPhys, worldPhys, alReflector);
   
   // Override detector interface with perfect transmission
   G4MaterialPropertiesTable* detProps = new G4MaterialPropertiesTable();
+  G4double rindexCoupling[2] = {1.5, 1.5};  // Optical grease
+  detProps->AddProperty("RINDEX", energy, rindexCoupling, 2);
   G4double transmittance[2] = {1.0, 1.0};
   detProps->AddProperty("TRANSMITTANCE", energy, transmittance, 2);
   
@@ -180,9 +189,9 @@ G4VPhysicalVolume* DetectorConstruction::Construct()
   detSurface->SetModel(unified);
   detSurface->SetFinish(polished);
   detSurface->SetMaterialPropertiesTable(detProps);
-  
-  // This OVERRIDES the skin at the scintillator-detector boundary
-  new G4LogicalBorderSurface("ScintDetBorder", plasticPhys, detectorPhys, detSurface);
+    
+  // Coupling: scintillator to detector (overrides at this boundary)
+  //new G4LogicalBorderSurface("DetectorCoupling", plasticPhys, detectorPhys, detSurface);
   
   // Return the world volume
   return worldPhys;
