@@ -1,0 +1,20 @@
+/process/optical/verbose 2
+#/tracking/verbose 2
+/run/verbose 1
+
+/gps/particle opticalphoton
+
+#/gps/energy 2.92 eV
+/gps/ene/type Lin
+/gps/ene/min 2.0 eV
+/gps/ene/max 3.5 eV
+/gps/ene/gradient 0
+/gps/ene/intercept 1
+
+/gps/direction 0 0 -1
+/gps/position 0 0 1 cm 
+
+/run/beamOn 100000
+
+/vis/enable
+/vis/viewer/flush

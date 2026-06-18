@@ -67,7 +67,6 @@ G4bool PhotonSD::ProcessHits(G4Step* step, G4TouchableHistory* history)
         return false;
     
     static G4int callCount = 0;
-    callCount++;
     
     if (callCount <= 10)
     {
@@ -75,6 +74,7 @@ G4bool PhotonSD::ProcessHits(G4Step* step, G4TouchableHistory* history)
                << " Particle: " << step->GetTrack()->GetDefinition()->GetParticleName()
                << " Volume: " << step->GetPreStepPoint()->GetPhysicalVolume()->GetName()
                << G4endl;
+        callCount++;
     }
     
     G4StepPoint* preStep = step->GetPreStepPoint();
@@ -189,7 +189,7 @@ void PhotonSD::MergeFiles(const G4String& prefix, const G4String& outputFile)
         //G4cout << filename.str() << G4endl;
         std::ifstream threadFile(filename.str());
         if (!threadFile.is_open()) {
-            break;  // No more files
+            continue;
         }
         
         // Skip header line of each file

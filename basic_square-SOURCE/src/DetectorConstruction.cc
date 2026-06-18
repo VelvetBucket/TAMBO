@@ -19,6 +19,10 @@
 #include "G4LogicalBorderSurface.hh"
 #include "G4LogicalSkinSurface.hh"
 
+DetectorConstruction::DetectorConstruction(const G4String& outputPrefix)
+    : fOutputPrefix(outputPrefix)
+{
+}
 G4VPhysicalVolume* DetectorConstruction::Construct() 
 {
   // Materials
@@ -131,7 +135,14 @@ G4VPhysicalVolume* DetectorConstruction::Construct()
   G4double worldSizeX = 1 * m;
   G4double worldSizeY = 1 * m;
   G4double worldSizeZ = 1 * m;
-
+  
+  // Add optical properties to air
+  G4MaterialPropertiesTable* airProps = new G4MaterialPropertiesTable();
+  G4double energyAir[2] = {2.0*eV, 4.0*eV};
+  G4double rindexAir[2] = {1.0, 1.0};  // Air refractive index
+  airProps->AddProperty("RINDEX", energyAir, rindexAir, 2);
+  air->SetMaterialPropertiesTable(airProps);
+  
   G4Box* worldBox = new G4Box("world", worldSizeX / 2., worldSizeY / 2., worldSizeZ / 2.);
   G4LogicalVolume* worldLog = new G4LogicalVolume(worldBox, air, "world");
   G4VPhysicalVolume* worldPhys = new G4PVPlacement(nullptr, {}, worldLog, "world", nullptr, false, 0);
@@ -151,6 +162,8 @@ G4VPhysicalVolume* DetectorConstruction::Construct()
   G4double energySi[2] = {2.0*eV, 4.0*eV};
   G4double rindexSi[2] = {3.9, 5.0};
   siliconBulk->AddProperty("RINDEX", energySi, rindexSi, 2);
+  G4double absSi[2] = {0.001*mm, 0.001*mm};  // VERY SHORT = immediate absorption
+  siliconBulk->AddProperty("ABSLENGTH", energySi, absSi, 2);  // THIS IS CRITICAL!
   silicon->SetMaterialPropertiesTable(siliconBulk);
   
   G4double detectorX = 6 * mm;
@@ -208,7 +221,7 @@ void DetectorConstruction::ConstructSDandField()
   G4LogicalVolume* detectorLog = store->GetVolume("detectorLog");
   
   // Create the sensitive detector
-  PhotonSD* photonSD = new PhotonSD("PhotonSD", "my_experiment_photons");
+  PhotonSD* photonSD = new PhotonSD("PhotonSD", fOutputPrefix);
   
   // Register it with the SD manager (optional if done in PhotonSD constructor)
   G4SDManager::GetSDMpointer()->AddNewDetector(photonSD);

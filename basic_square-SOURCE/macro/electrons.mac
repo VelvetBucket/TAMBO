@@ -1,17 +1,17 @@
 /gps/verbose 2
 
-/gps/particle mu-
+/gps/particle e-
 
 /gps/ene/type Lin
-/gps/ene/min 100 MeV
-/gps/ene/max 10 GeV
+/gps/ene/min 1 MeV
+/gps/ene/max 1 GeV
 /gps/ene/gradient 0
 /gps/ene/intercept 1
 
 /gps/direction 0 0 -1
-/gps/position 0 0 1 m
+/gps/position 0 0 1 cm
 
-/run/beamOn 10
+/run/beamOn 100
 
 /vis/enable
 /vis/viewer/flush

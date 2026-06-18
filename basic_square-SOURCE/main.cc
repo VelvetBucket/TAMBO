@@ -32,6 +32,7 @@ int main(int argc, char** argv)
     
     vector<G4String> macros;    
     bool interactive = false;
+    G4String outputPrefix = "photon_hits";  // Default
 
     // Parse command line arguments
     if  (argc == 1)
@@ -82,9 +83,31 @@ int main(int argc, char** argv)
         visManager->SetVerboseLevel(0);
         visManager->Initialize();
     #endif  
-
+  
+    // Extract prefix from first macro filename
+    if (!macros.empty())
+    {
+        outputPrefix = macros[0];
+        // Remove path
+        size_t lastSlash = outputPrefix.find_last_of("/\\");
+        if (lastSlash != G4String::npos)
+        {
+            outputPrefix = outputPrefix.substr(lastSlash + 1);
+        }
+        // Remove extension(s) (e.g., .mac, .in, etc.)
+        size_t lastDot = outputPrefix.find_last_of(".");
+        if (lastDot != G4String::npos)
+        {
+            outputPrefix = outputPrefix.substr(0, lastDot);
+        }
+        // Add _output suffix
+        outputPrefix += "_output";
+        
+        G4cout << "Output prefix set to: " << outputPrefix << G4endl;
+    }
+    
     runManager->SetUserInitialization(new PhysicsList());
-    runManager->SetUserInitialization(new DetectorConstruction());
+    runManager->SetUserInitialization(new DetectorConstruction(outputPrefix));
     runManager->SetUserInitialization(new ActionInitialization());
 
     G4ScoringManager::GetScoringManager();
@@ -124,7 +147,7 @@ int main(int argc, char** argv)
     #endif
     delete runManager;
     
-    PhotonSD::MergeFiles("my_experiment_photons", "my_experiment_photons_merged.csv");
+    PhotonSD::MergeFiles(outputPrefix, outputPrefix + "_merged.csv");
     
     G4cout << "Program finished normally." << G4endl;
     return 0;

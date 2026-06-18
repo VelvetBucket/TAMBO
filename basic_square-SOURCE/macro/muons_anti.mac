@@ -1,6 +1,6 @@
 /gps/verbose 2
 
-/gps/particle mu-
+/gps/particle mu+
 
 /gps/ene/type Lin
 /gps/ene/min 100 MeV
