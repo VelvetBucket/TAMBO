@@ -1,12 +1,16 @@
-/gps/verbose 2
+/gps/verbose 1
 
 /gps/particle proton
 
-/gps/ene/type Lin
-/gps/ene/min 10 MeV
-/gps/ene/max 10 GeV
-/gps/ene/gradient 0
-/gps/ene/intercept 1
+#/gps/ene/type Lin
+#/gps/ene/min 10 MeV
+#/gps/ene/max 10 GeV
+#/gps/ene/gradient 0
+#/gps/ene/intercept 1
+
+/gps/ene/type User
+/gps/hist/type energy
+/control/execute macro/hists/proton-Ehist.mac
 
 /gps/direction 0 0 -1
 /gps/position 0 0 1 cm

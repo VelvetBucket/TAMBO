@@ -1,15 +1,19 @@
 #include "ActionInitialization.hh"
 #include "PrimaryGeneratorAction.hh"
 
+ActionInitialization::ActionInitialization(const G4String& outputPrefix)
+    : fOutputPrefix(outputPrefix)
+{
+}
+
+ActionInitialization::~ActionInitialization() {}
+
 void ActionInitialization::Build() const
 {
-    // Add your actions
-
-    // Add the primary generator (mandatory)
-    SetUserAction(new PrimaryGeneratorAction());
+    SetUserAction(new PrimaryGeneratorAction(fOutputPrefix));
 }
 
 void ActionInitialization::BuildForMaster() const
 {
-    // By default, don't do anything
+    // Master thread doesn't generate particles
 }

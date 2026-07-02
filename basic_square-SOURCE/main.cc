@@ -18,6 +18,7 @@
 
 #include "ActionInitialization.hh"
 #include "DetectorConstruction.hh"
+#include "PrimaryGeneratorAction.hh"
 #include "PhysicsList.hh"
 #include "PhotonSD.hh" 
 
@@ -108,7 +109,7 @@ int main(int argc, char** argv)
     
     runManager->SetUserInitialization(new PhysicsList());
     runManager->SetUserInitialization(new DetectorConstruction(outputPrefix));
-    runManager->SetUserInitialization(new ActionInitialization());
+    runManager->SetUserInitialization(new ActionInitialization(outputPrefix));
 
     G4ScoringManager::GetScoringManager();
     
@@ -148,6 +149,9 @@ int main(int argc, char** argv)
     delete runManager;
     
     PhotonSD::MergeFiles(outputPrefix, outputPrefix + "_merged.csv");
+    
+    // Merge generated particles
+    PrimaryGeneratorAction::MergeGeneratedFiles(outputPrefix, outputPrefix + "_generated_merged.csv");
     
     G4cout << "Program finished normally." << G4endl;
     return 0;
