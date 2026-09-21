@@ -1,0 +1,22 @@
+/gps/verbose 1
+
+/gps/particle gamma
+
+#/gps/energy 2.92 eV
+#/gps/ene/type Lin
+#/gps/ene/min 2.0 eV
+#/gps/ene/max 3.5 eV
+#/gps/ene/gradient 0
+#/gps/ene/intercept 1
+
+/gps/ene/type User
+/gps/hist/type energy
+/control/execute macro/hists/gamma-Ehist.mac
+
+/gps/direction 0 0 -1
+/gps/position 2.925 0 50 cm
+
+/run/beamOn 100000
+
+/vis/enable
+/vis/viewer/flush
