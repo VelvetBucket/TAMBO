@@ -1,0 +1,13 @@
+/process/had/rdm/thresholdForVeryLongDecayTime 1.0e+60 year
+/gps/verbose 1
+
+/gps/particle ion
+/gps/ion 11 22       # Z=11 (Na), A=22
+/gps/ang/type iso
+/gps/position 0 0 5 cm
+/gps/energy 0 MeV
+
+/run/beamOn 10000
+
+/vis/enable
+/vis/viewer/flush

@@ -1,0 +1,57 @@
+#
+# Macro file visualization
+#
+# Set verbosity
+#
+/control/verbose 2
+#
+# Use this open statement to create an OpenGL view:
+/vis/open OGL 600x600-0+0
+#
+# Disable auto refresh and quieten vis messages whilst scene and
+# trajectories are established:
+/vis/viewer/set/autoRefresh true
+/vis/verbose errors
+#
+# Draw geometry:
+/vis/drawVolume
+#
+# Specify view vector:
+/vis/viewer/set/targetPoint 0 0 0 m
+/vis/viewer/set/viewpointVector 1 -1 1 m
+/vis/viewer/zoomTo 20.
+#
+# Specify style (surface or wireframe):
+#/vis/viewer/set/style wireframe
+#
+# Draw coordinate axes:
+/vis/scene/add/axes 0 0 0 15 cm
+#
+# STORE TRAJECTORIES (this was missing!)
+/tracking/storeTrajectory 1
+
+# Draw trajectories - use drawByParticleID to show all particles
+/vis/scene/add/trajectories smooth
+/vis/modeling/trajectories/create/drawByParticleID
+
+# Configure trajectory drawing
+/vis/modeling/trajectories/drawByParticleID-0/default/setDrawStepPts false
+/vis/modeling/trajectories/drawByParticleID-0/default/setStepPtsSize 2
+
+# Set colors for different particles
+/vis/modeling/trajectories/drawByParticleID-0/set opticalphoton yellow
+/vis/modeling/trajectories/drawByParticleID-0/set gamma green
+/vis/modeling/trajectories/drawByParticleID-0/set e- red
+/vis/modeling/trajectories/drawByParticleID-0/set e+ blue
+/vis/modeling/trajectories/drawByParticleID-0/set mu- cyan
+#
+# Re-establish auto refreshing and verbosity:
+/vis/viewer/set/autoRefresh false
+/vis/verbose warnings
+#
+# For file-based drivers, use this to create an empty detector view:
+#/vis/viewer/flush
+#
+# Set visualization to accumulate events into one picture
+#
+/vis/scene/endOfEventAction accumulate 1

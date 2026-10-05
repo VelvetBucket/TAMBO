@@ -24,7 +24,7 @@ public:
 private:
     EventAction* fEventAction;
     G4String fOutputPrefix;
-    
+    G4int GetBarID(const G4Step* step);
     // Per-thread data for CSV writing
     struct ThreadData
     {

@@ -116,8 +116,8 @@ void SteppingAction::UserSteppingAction(const G4Step* step)
         G4double edepStep = step->GetTotalEnergyDeposit();
         if (fEventAction && edepStep > 0.0)
         {
-            G4int barraID = step->GetPreStepPoint()->GetTouchableHandle()->GetCopyNumber();
-            fEventAction->AddEdep(barraID, edepStep);
+            G4int barID = GetBarID(step);
+            fEventAction->AddEdep(barID, edepStep);
         }
     }
 
@@ -138,7 +138,7 @@ void SteppingAction::UserSteppingAction(const G4Step* step)
                 G4double time = track->GetGlobalTime();
                 G4ThreeVector pos = step->GetPreStepPoint()->GetPosition();
                 G4int eventID = G4RunManager::GetRunManager()->GetCurrentEvent()->GetEventID();
-                G4int barID = step->GetPreStepPoint()->GetTouchableHandle()->GetCopyNumber();
+                G4int barID = GetBarID(step);
                 
                 // Write to per-thread CSV (your functionality)
                 WritePhotonToCSV(eventID, barID, energy, wavelength, 
@@ -155,6 +155,24 @@ void SteppingAction::UserSteppingAction(const G4Step* step)
             }
         }
     }
+}
+
+G4int SteppingAction::GetBarID(const G4Step* step)
+{
+    G4TouchableHandle touchable = step->GetPreStepPoint()->GetTouchableHandle();
+    
+    for (G4int i = 0; i < touchable->GetHistoryDepth(); i++)
+    {
+        G4String volName = touchable->GetVolume(i)->GetName();
+        
+        // Match physical volume name "Scint_Phys_N"
+        if (volName.find("Bar_Phys_") != std::string::npos)
+        {
+            return touchable->GetCopyNumber(i);
+        }
+    }
+    
+    return -1;  // Not found
 }
 
 void SteppingAction::MergePhotonFiles(const G4String& prefix, 
