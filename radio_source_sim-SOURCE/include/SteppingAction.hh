@@ -40,7 +40,8 @@ private:
     
     void OpenThreadFile();
     void WritePhotonToCSV(G4int eventID, G4int barID, 
-                           G4double energy, G4double wavelength,
+                           G4double energy, G4double wavelength, 
+                           G4String wasDetected_2_5, G4String wasDetected_5_0,
                            G4double time, G4double posX, G4double posY, G4double posZ);
 };
 
