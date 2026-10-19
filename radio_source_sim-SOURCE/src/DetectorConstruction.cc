@@ -14,19 +14,23 @@
 #include "G4Colour.hh"
 #include "G4VisAttributes.hh"
 #include "G4PhysicalConstants.hh"
+#include "DetectorMessenger.hh"
 
 void DetectorConstruction::BuildShield(
         G4LogicalVolume* motherVolume,
-        G4double detectorHalfZ,
-        G4double distanceSD)
+        G4double detectorHalfZ)
 {
     G4NistManager* nist = G4NistManager::Instance();
 
-    // ------------------------------------------------------------------
+    // ==================================================================
     // Materials
-    // ------------------------------------------------------------------
-    if (!fMatPlexiglass) fMatPlexiglass = nist->FindOrBuildMaterial("G4_PLEXIGLASS");
-    if (!fMatCellophane) fMatCellophane = nist->FindOrBuildMaterial("G4_CELLULOSE_CELLOPHANE");
+    // ==================================================================
+    if (!fMatPlexiglass)
+        fMatPlexiglass = nist->FindOrBuildMaterial("G4_PLEXIGLASS");
+
+    if (!fMatCellophane)
+        fMatCellophane = nist->FindOrBuildMaterial("G4_CELLULOSE_CELLOPHANE");
+
     if (!fMatEpoxy) {
         G4Element* H = new G4Element("Hydrogen", "H", 1, 1.01*g/mole);
         G4Element* C = new G4Element("Carbon",   "C", 6, 12.01*g/mole);
@@ -35,139 +39,181 @@ void DetectorConstruction::BuildShield(
         fMatEpoxy->AddElement(C, 2);
     }
 
-    // ------------------------------------------------------------------
-    // Derived dimensions
-    // ------------------------------------------------------------------
-    const G4double sourceHeight  = fRing_R1 - fThickShieldUp - fThickShieldDn;
-    const G4double epoxyHeight   = fThickShieldUp;
+    // ==================================================================
+    // Physical dimensions (from Spectrum Techniques datasheet)
+    // ==================================================================
+    const G4double inch = 2.54 * cm;
+    const G4double casingRadius    = 0.505 * inch;   // 12827 µm
+    const G4double casingHeight    = 0.125 * inch;   // 3175 µm
+    const G4double epoxyRadius     = 0.125 * inch;   // 3175 µm
+    const G4double epoxyHeight     = 0.110 * inch;   // 2794 µm
 
-    // Lowest point of the shield (relative to its own center)
-    const G4double shieldLowestZ = sourceHeight/2. + fThickShieldDn;
+    const G4double casingHalfZ     = casingHeight / 2.;
+    const G4double epoxyHalfZ      = epoxyHeight / 2.;
+    const G4double windowThickness = casingHeight - epoxyHeight;   // 381 µm
 
-    // Where the shield center must be so its lowest point is at
-    // distanceSD above the detector's top face
-    const G4double shieldCenterZ = detectorHalfZ + distanceSD - shieldLowestZ;
+    // ==================================================================
+    // Shield position
+    // ==================================================================
+    // Bottom face of casing = detectorHalfZ + fDistance_SD
+    const G4double shieldCenterZ = detectorHalfZ + fDistance_SD + casingHalfZ;
 
-    // ------------------------------------------------------------------
+    // ==================================================================
     // Visual attributes
-    // ------------------------------------------------------------------
+    // ==================================================================
     G4VisAttributes* tomato = new G4VisAttributes(G4Colour(1.00, 0.39, 0.28));
     G4VisAttributes* silver = new G4VisAttributes(G4Colour(0.75, 0.75, 0.75));
     G4VisAttributes* yellow = new G4VisAttributes(G4Colour(1.00, 1.00, 0.00));
+    G4VisAttributes* blue   = new G4VisAttributes(G4Colour(0.00, 0.00, 1.00));
     tomato->SetVisibility(true);
     silver->SetVisibility(true);
     yellow->SetVisibility(true);
+    blue->SetVisibility(true);
+    blue->SetForceSolid(true);
 
-    // ==================================================================
-    // 1. Outer ring (Plexiglass side wall)
-    // ==================================================================
     G4bool checkOverlaps = true;
-    G4Tubs* solidOuterRing = new G4Tubs("SrCs_Sshield_out",
-        fRing_R1, fRing_R2, sourceHeight/2., 0., twopi);
 
-    G4LogicalVolume* logicOuterRing = new G4LogicalVolume(
-        solidOuterRing, fMatPlexiglass, "SrCs_Sshield_out");
+    // ==================================================================
+    // 1. Plexiglass casing (full cylinder)
+    // ==================================================================
+    G4Tubs* solidCasing = new G4Tubs("Casing",
+        0., casingRadius, casingHalfZ, 0., twopi);
+
+    G4LogicalVolume* logicCasing = new G4LogicalVolume(
+        solidCasing, fMatPlexiglass, "Casing");
 
     new G4PVPlacement(0,
         G4ThreeVector(0, 0, shieldCenterZ),
-        logicOuterRing, "SrCs_Sshield_out",
+        logicCasing, "Casing",
         motherVolume, false, 0, checkOverlaps);
-    logicOuterRing->SetVisAttributes(tomato);
+    logicCasing->SetVisAttributes(tomato);
 
     // ==================================================================
-    // 2. Epoxy cap (bottom of source cavity)
+    // 2. Epoxy source cylinder — flush with TOP of casing
+    //    (so the plexiglass window is on the BOTTOM, facing the detector)
     // ==================================================================
-    G4Tubs* solidEpoxyDown = new G4Tubs("SrCs_epoxy_Sshield_down",
-        fRing_R1/2., fRing_R1, sourceHeight/2., 0., twopi);
+    G4Tubs* solidEpoxy = new G4Tubs("EpoxySource",
+        0., epoxyRadius, epoxyHalfZ, 0., twopi);
 
-    G4LogicalVolume* logicEpoxyDown = new G4LogicalVolume(
-        solidEpoxyDown, fMatEpoxy, "SrCs_epoxy_Sshield_down");
+    G4LogicalVolume* logicEpoxy = new G4LogicalVolume(
+        solidEpoxy, fMatEpoxy, "EpoxySource");
+
+    // Epoxy center = casing top - epoxyHalfZ
+    const G4double epoxyCenterZ = shieldCenterZ + casingHalfZ - epoxyHalfZ;
 
     new G4PVPlacement(0,
-        G4ThreeVector(0, 0, shieldCenterZ),
-        logicEpoxyDown, "SrCs_epoxy_Sshield_down",
+        G4ThreeVector(0, 0, epoxyCenterZ),
+        logicEpoxy, "EpoxySource",
         motherVolume, false, 0, checkOverlaps);
-    logicEpoxyDown->SetVisAttributes(silver);
+    logicEpoxy->SetVisAttributes(silver);
 
     // ==================================================================
-    // 3. Epoxy shield (top)
+    // 2b. Radioactive active spot (blue visual marker)
+    //     Made of EPOXY → same material as the source matrix,
+    //     so it has NO effect on the physics.
+    //     Positioned at the bottom of the epoxy (closest to detector).
     // ==================================================================
-    G4Tubs* solidEpoxyUp = new G4Tubs("SrCs_epoxy_Sshield_up",
-        0., fRing_R1, epoxyHeight/2., 0., twopi);
+    if (fActiveRadius > 0. && fActiveThickness > 0.)
+    {
+        // Sanity check: disk must fit inside the epoxy
+        if (fActiveThickness > epoxyHeight || fActiveRadius > epoxyRadius) {
+            G4cerr << "WARNING: Active spot exceeds epoxy dimensions!" << G4endl;
+        }
 
-    G4LogicalVolume* logicEpoxyUp = new G4LogicalVolume(
-        solidEpoxyUp, fMatEpoxy, "SrCs_epoxy_Sshield_up");
+        G4Tubs* solidActive = new G4Tubs("SrCs_ActiveSpot",
+            0., fActiveRadius, fActiveThickness/2., 0., twopi);
 
-    new G4PVPlacement(0,
-        G4ThreeVector(0, 0, shieldCenterZ - epoxyHeight/2. - sourceHeight/2.),
-        logicEpoxyUp, "SrCs_epoxy_Sshield_up",
-        motherVolume, false, 0, checkOverlaps);
-    logicEpoxyUp->SetVisAttributes(silver);
+        // ← Use fMatEpoxy: same material → no physics interference
+        G4LogicalVolume* logicActive = new G4LogicalVolume(
+            solidActive, fMatEpoxy, "ActiveSpot");
 
-    // ==================================================================
-    // 4. Plexiglass top cap
-    // ==================================================================
-    if (fThickShieldUp > 0.*um) {
-        G4Tubs* solidCapUp = new G4Tubs("SrCs_tub_Sshield_up",
-            fRing_R1, fRing_R2, fThickShieldUp/2., 0., twopi);
-
-        G4LogicalVolume* logicCapUp = new G4LogicalVolume(
-            solidCapUp, fMatPlexiglass, "SrCs_tub_Sshield_up");
+        // Bottom of epoxy = epoxyCenterZ - epoxyHalfZ
+        // Disk center     = bottom + fActiveThickness/2
+        const G4double activeCenterZ =
+            (epoxyCenterZ - epoxyHalfZ) + fActiveThickness/2.;
 
         new G4PVPlacement(0,
-            G4ThreeVector(0, 0, shieldCenterZ - sourceHeight/2. - fThickShieldUp/2.),
-            logicCapUp, "SrCs_tub_Sshield_up",
+            G4ThreeVector(0, 0, activeCenterZ),
+            logicActive, "ActiveSpot",
             motherVolume, false, 0, checkOverlaps);
-        logicCapUp->SetVisAttributes(tomato);
+
+        logicActive->SetVisAttributes(blue);
     }
 
     // ==================================================================
-    // 5. Cellophane paper (top)
+    // 3. Cellophane paper — on top of the casing (away from detector)
     // ==================================================================
-    {
-        G4Tubs* solidPaper = new G4Tubs("SrCs_paper_Sshield_up",
-            0., fRing_R2, fThickPaper/2., 0., twopi);
+    if (fThickPaper > 0.*um) {
+        G4Tubs* solidPaper = new G4Tubs("SrCs_Paper",
+            0., casingRadius, fThickPaper/2., 0., twopi);
 
         G4LogicalVolume* logicPaper = new G4LogicalVolume(
-            solidPaper, fMatCellophane, "SrCs_paper_Sshield_up");
+            solidPaper, fMatCellophane, "SrCs_Paper");
 
         new G4PVPlacement(0,
-            G4ThreeVector(0, 0,
-                shieldCenterZ - fThickShieldUp - sourceHeight/2. - fThickPaper/2.),
-            logicPaper, "SrCs_paper_Sshield_up",
+            G4ThreeVector(0, 0, shieldCenterZ + casingHalfZ + fThickPaper/2.),
+            logicPaper, "SrCs_Paper",
             motherVolume, false, 0, checkOverlaps);
         logicPaper->SetVisAttributes(yellow);
     }
 
     // ==================================================================
-    // 6. Plexiglass bottom cap (closest to detector)
+    // Summary
     // ==================================================================
-    if (fThickShieldDn > 0.*um) {
-        G4Tubs* solidCapDown = new G4Tubs("SrCs_cap_Sshield_down",
-            0., fRing_R2, fThickShieldDn/2., 0., twopi);
-
-        G4LogicalVolume* logicCapDown = new G4LogicalVolume(
-            solidCapDown, fMatPlexiglass, "SrCs_cap_Sshield_down");
-
-        new G4PVPlacement(0,
-            G4ThreeVector(0, 0, shieldCenterZ + sourceHeight/2. + fThickShieldDn/2.),
-            logicCapDown, "SrCs_cap_Sshield_down",
-            motherVolume, false, 0, checkOverlaps);
-        logicCapDown->SetVisAttributes(tomato);
-    }
-    
     G4cout << "\n============================================================" << G4endl;
-    G4cout << "  Shield Positioned Above Detector" << G4endl;
+    G4cout << "  Source — window toward detector" << G4endl;
+    G4cout << "============================================================" << G4endl;
+    G4cout << "  Casing bottom face : " 
+           << (shieldCenterZ - casingHalfZ)/um << " µm" << G4endl;
+    G4cout << "  Window top face    : " 
+           << (shieldCenterZ - casingHalfZ + windowThickness)/um << " µm" << G4endl;
+    G4cout << "  Epoxy bottom face  : " 
+           << (epoxyCenterZ - epoxyHalfZ)/um << " µm" << G4endl;
+    G4cout << "  Epoxy top face     : " 
+           << (epoxyCenterZ + epoxyHalfZ)/um << " µm" << G4endl;
+    G4cout << "  Casing top face    : " 
+           << (shieldCenterZ + casingHalfZ)/um << " µm" << G4endl;
+
+    if (fActiveRadius > 0. && fActiveThickness > 0.) {
+        const G4double activeCenterZ =
+            (epoxyCenterZ - epoxyHalfZ) + fActiveThickness/2.;
+        G4cout << "  Active spot Z      : " 
+               << activeCenterZ/um << " µm" << G4endl;
+        G4cout << "  Active spot radius : " 
+               << fActiveRadius/mm << " mm" << G4endl;
+        G4cout << "  Active spot thick. : " 
+               << fActiveThickness/um << " µm" << G4endl;
+    }
+
+    if (fThickPaper > 0.*um) {
+        G4cout << "  Paper top face     : " 
+               << (shieldCenterZ + casingHalfZ + fThickPaper)/um << " µm" << G4endl;
+    }
+
+    G4cout << "  Requested gap      : " << fDistance_SD/mm << " mm" << G4endl;
+    G4cout << "  Actual gap         : " 
+           << (shieldCenterZ - casingHalfZ - detectorHalfZ)/mm << " mm" << G4endl;
     G4cout << "============================================================\n" << G4endl;
 }
 
 DetectorConstruction::DetectorConstruction(const G4String& outputPrefix)
-    : fOutputPrefix(outputPrefix)
+    : fOutputPrefix(outputPrefix),
+      fMessenger(nullptr),
+      fDistance_SD(0.0 * mm)
 {
+    fMessenger = new DetectorMessenger(this);
+}
+
+DetectorConstruction::~DetectorConstruction()
+{
+    delete fMessenger;
 }
 
 G4VPhysicalVolume* DetectorConstruction::Construct()
 {
+    //G4cout << "=== Construct() called ===" << G4endl;
+    //G4cout << "    fDistance_SD = " << fDistance_SD/mm << " mm" << G4endl;
+
     G4NistManager* nist = G4NistManager::Instance();
     G4bool checkOverlaps = true;
     G4VPhysicalVolume* physAirRectoA[16] = { nullptr };
@@ -799,11 +845,9 @@ G4VPhysicalVolume* DetectorConstruction::Construct()
 // -----------------------------------------------------
 // 6. POSICIONANDO LA FUENTE (SHIELD) EN RELACION A LA CAJA 
 // -----------------------------------------------------
-                
-      G4double fDistance_SD = 0. * mm;
 
-      // Call the shield builder:
-      BuildShield(logicWorld, 0.5 * al_z, fDistance_SD);
+    // Call the shield builder:
+    BuildShield(logicWorld, 0.5 * al_z);
 
     fScoringVolume = logicDetector;
     return physWorld;

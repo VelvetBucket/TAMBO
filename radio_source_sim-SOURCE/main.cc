@@ -36,7 +36,9 @@ int main(int argc, char** argv)
     vector<G4String> macros;    
     bool interactive = false;
     G4String outputPrefix = "photon_hits";  // Default
-
+    G4double distanceSD = 0.0;         // default
+    G4bool   distanceSet = false;
+    
     // Parse command line arguments
     if  (argc == 1)
     {
@@ -53,6 +55,29 @@ int main(int argc, char** argv)
                 interactive = true;
                 G4cout << "Found -i flag -> interactive mode" << G4endl;
                 continue;
+            }
+            else if (arg == "--distance" && i + 1 < argc)
+            {
+                // Expect: --distance <value> <unit>  (e.g. 1 cm)
+                G4double value = std::atof(argv[++i]);
+                G4String unit  = "mm";
+                if (i + 1 < argc) {
+                    G4String next = argv[i + 1];
+                    if (next == "mm" || next == "cm" || next == "m" ||
+                        next == "um") {
+                        unit = next;
+                        ++i;
+                    }
+                }
+
+                if      (unit == "mm") distanceSD = value * mm;
+                else if (unit == "cm") distanceSD = value * cm;
+                else if (unit == "m")  distanceSD = value * m;
+                else if (unit == "um") distanceSD = value * um;
+
+                distanceSet = true;
+                G4cout << "Command line: distanceSD = " << distanceSD/mm 
+                       << " mm" << G4endl;
             }
             else
             {
@@ -109,8 +134,17 @@ int main(int argc, char** argv)
         G4cout << "Output prefix set to: " << outputPrefix << G4endl;
     }
     
+     // --- Detector construction ---
+    auto detector = new DetectorConstruction(outputPrefix);
+
+    // *** SET THE PARAMETER BEFORE Initialize() ***
+    if (distanceSet)
+        detector->SetDistance_SD(distanceSD);
+
+    runManager->SetUserInitialization(detector);
+    
     runManager->SetUserInitialization(new PhysicsList());
-    runManager->SetUserInitialization(new DetectorConstruction(outputPrefix));
+    runManager->SetUserInitialization(detector);
     runManager->SetUserInitialization(new ActionInitialization(outputPrefix));
 
     G4ScoringManager::GetScoringManager();
