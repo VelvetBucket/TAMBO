@@ -40,7 +40,10 @@ void DetectorConstruction::BuildShield(
     }
 
     // ==================================================================
-    // Physical dimensions (from Spectrum Techniques datasheet)
+    // Physical dimensions
+    //   Casing : Ø 1.010"  ×  h 0.125"
+    //   Epoxy  : Ø 0.250"  ×  h 0.110"
+    //   Cap    : 0.125" − 0.110" = 381 µm plexiglass
     // ==================================================================
     const G4double inch = 2.54 * cm;
     const G4double casingRadius    = 0.505 * inch;   // 12827 µm
@@ -50,13 +53,19 @@ void DetectorConstruction::BuildShield(
 
     const G4double casingHalfZ     = casingHeight / 2.;
     const G4double epoxyHalfZ      = epoxyHeight / 2.;
-    const G4double windowThickness = casingHeight - epoxyHeight;   // 381 µm
+    const G4double capThickness    = casingHeight - epoxyHeight;   // 381 µm
 
     // ==================================================================
-    // Shield position
+    // Position
     // ==================================================================
-    // Bottom face of casing = detectorHalfZ + fDistance_SD
+    // Bottom face of casing at detectorHalfZ + fDistance_SD
     const G4double shieldCenterZ = detectorHalfZ + fDistance_SD + casingHalfZ;
+
+    // Plexiglass cap at the BOTTOM (faces the detector)
+    const G4double capCenterZ    = shieldCenterZ - casingHalfZ + capThickness / 2.;
+
+    // Epoxy flush with the TOP of the casing
+    const G4double epoxyCenterZ  = shieldCenterZ + casingHalfZ - epoxyHalfZ;
 
     // ==================================================================
     // Visual attributes
@@ -74,32 +83,45 @@ void DetectorConstruction::BuildShield(
     G4bool checkOverlaps = true;
 
     // ==================================================================
-    // 1. Plexiglass casing (full cylinder)
+    // 1. Hollow plexiglass wall
     // ==================================================================
-    G4Tubs* solidCasing = new G4Tubs("Casing",
-        0., casingRadius, casingHalfZ, 0., twopi);
+    G4Tubs* solidWall = new G4Tubs("Wall",
+        epoxyRadius, casingRadius, casingHalfZ, 0., twopi);
 
-    G4LogicalVolume* logicCasing = new G4LogicalVolume(
-        solidCasing, fMatPlexiglass, "Casing");
+    G4LogicalVolume* logicWall = new G4LogicalVolume(
+        solidWall, fMatPlexiglass, "Wall");
 
     new G4PVPlacement(0,
         G4ThreeVector(0, 0, shieldCenterZ),
-        logicCasing, "Casing",
+        logicWall, "Wall",
         motherVolume, false, 0, checkOverlaps);
-    logicCasing->SetVisAttributes(tomato);
+    logicWall->SetVisAttributes(tomato);
 
     // ==================================================================
-    // 2. Epoxy source cylinder — flush with TOP of casing
-    //    (so the plexiglass window is on the BOTTOM, facing the detector)
+    // 2. Plexiglass cap — BOTTOM (faces detector)
+    // ==================================================================
+    {
+        G4Tubs* solidCap = new G4Tubs("Cap",
+            0., casingRadius, capThickness/2., 0., twopi);
+
+        G4LogicalVolume* logicCap = new G4LogicalVolume(
+            solidCap, fMatPlexiglass, "Cap");
+
+        new G4PVPlacement(0,
+            G4ThreeVector(0, 0, capCenterZ),
+            logicCap, "Cap",
+            motherVolume, false, 0, checkOverlaps);
+        logicCap->SetVisAttributes(tomato);
+    }
+
+    // ==================================================================
+    // 3. Epoxy source — flush with TOP of casing
     // ==================================================================
     G4Tubs* solidEpoxy = new G4Tubs("EpoxySource",
         0., epoxyRadius, epoxyHalfZ, 0., twopi);
 
     G4LogicalVolume* logicEpoxy = new G4LogicalVolume(
         solidEpoxy, fMatEpoxy, "EpoxySource");
-
-    // Epoxy center = casing top - epoxyHalfZ
-    const G4double epoxyCenterZ = shieldCenterZ + casingHalfZ - epoxyHalfZ;
 
     new G4PVPlacement(0,
         G4ThreeVector(0, 0, epoxyCenterZ),
@@ -108,27 +130,22 @@ void DetectorConstruction::BuildShield(
     logicEpoxy->SetVisAttributes(silver);
 
     // ==================================================================
-    // 2b. Radioactive active spot (blue visual marker)
-    //     Made of EPOXY → same material as the source matrix,
-    //     so it has NO effect on the physics.
-    //     Positioned at the bottom of the epoxy (closest to detector).
+    // 4. Blue active spot — bottom of epoxy, just above the window
+    //    (epoxy material → zero physics interference)
     // ==================================================================
     if (fActiveRadius > 0. && fActiveThickness > 0.)
     {
-        // Sanity check: disk must fit inside the epoxy
         if (fActiveThickness > epoxyHeight || fActiveRadius > epoxyRadius) {
             G4cerr << "WARNING: Active spot exceeds epoxy dimensions!" << G4endl;
         }
 
-        G4Tubs* solidActive = new G4Tubs("SrCs_ActiveSpot",
+        G4Tubs* solidActive = new G4Tubs("ActiveSpot",
             0., fActiveRadius, fActiveThickness/2., 0., twopi);
 
-        // ← Use fMatEpoxy: same material → no physics interference
         G4LogicalVolume* logicActive = new G4LogicalVolume(
             solidActive, fMatEpoxy, "ActiveSpot");
 
         // Bottom of epoxy = epoxyCenterZ - epoxyHalfZ
-        // Disk center     = bottom + fActiveThickness/2
         const G4double activeCenterZ =
             (epoxyCenterZ - epoxyHalfZ) + fActiveThickness/2.;
 
@@ -136,23 +153,22 @@ void DetectorConstruction::BuildShield(
             G4ThreeVector(0, 0, activeCenterZ),
             logicActive, "ActiveSpot",
             motherVolume, false, 0, checkOverlaps);
-
         logicActive->SetVisAttributes(blue);
     }
 
     // ==================================================================
-    // 3. Cellophane paper — on top of the casing (away from detector)
+    // 5. Cellophane paper — on top of the casing
     // ==================================================================
     if (fThickPaper > 0.*um) {
-        G4Tubs* solidPaper = new G4Tubs("SrCs_Paper",
+        G4Tubs* solidPaper = new G4Tubs("Paper",
             0., casingRadius, fThickPaper/2., 0., twopi);
 
         G4LogicalVolume* logicPaper = new G4LogicalVolume(
-            solidPaper, fMatCellophane, "SrCs_Paper");
+            solidPaper, fMatCellophane, "Paper");
 
         new G4PVPlacement(0,
             G4ThreeVector(0, 0, shieldCenterZ + casingHalfZ + fThickPaper/2.),
-            logicPaper, "SrCs_Paper",
+            logicPaper, "Paper",
             motherVolume, false, 0, checkOverlaps);
         logicPaper->SetVisAttributes(yellow);
     }
@@ -161,35 +177,37 @@ void DetectorConstruction::BuildShield(
     // Summary
     // ==================================================================
     G4cout << "\n============================================================" << G4endl;
-    G4cout << "  Source — window toward detector" << G4endl;
+    G4cout << "  Source — cap toward detector" << G4endl;
     G4cout << "============================================================" << G4endl;
-    G4cout << "  Casing bottom face : " 
-           << (shieldCenterZ - casingHalfZ)/um << " µm" << G4endl;
-    G4cout << "  Window top face    : " 
-           << (shieldCenterZ - casingHalfZ + windowThickness)/um << " µm" << G4endl;
-    G4cout << "  Epoxy bottom face  : " 
-           << (epoxyCenterZ - epoxyHalfZ)/um << " µm" << G4endl;
-    G4cout << "  Epoxy top face     : " 
-           << (epoxyCenterZ + epoxyHalfZ)/um << " µm" << G4endl;
-    G4cout << "  Casing top face    : " 
-           << (shieldCenterZ + casingHalfZ)/um << " µm" << G4endl;
+    G4cout << "  Casing radius      : " << casingRadius/um << " µm" << G4endl;
+    G4cout << "  Casing height      : " << casingHeight/um << " µm" << G4endl;
+    G4cout << "  Epoxy radius       : " << epoxyRadius/um << " µm" << G4endl;
+    G4cout << "  Epoxy height       : " << epoxyHeight/um << " µm" << G4endl;
+    G4cout << "  Cap thickness      : " << capThickness/um << " µm" << G4endl;
+    G4cout << "------------------------------------------------------------" << G4endl;
+    G4cout << "  Casing bottom face : " << (shieldCenterZ - casingHalfZ)/um << " µm" << G4endl;
+    G4cout << "  Cap bottom face    : " << (capCenterZ - capThickness/2.)/um << " µm" << G4endl;
+    G4cout << "  Cap top face       : " << (capCenterZ + capThickness/2.)/um << " µm" << G4endl;
+    G4cout << "  Epoxy bottom face  : " << (epoxyCenterZ - epoxyHalfZ)/um << " µm" << G4endl;
+    G4cout << "  Epoxy top face     : " << (epoxyCenterZ + epoxyHalfZ)/um << " µm" << G4endl;
+    G4cout << "  Casing top face    : " << (shieldCenterZ + casingHalfZ)/um << " µm" << G4endl;
 
     if (fActiveRadius > 0. && fActiveThickness > 0.) {
         const G4double activeCenterZ =
             (epoxyCenterZ - epoxyHalfZ) + fActiveThickness/2.;
-        G4cout << "  Active spot Z      : " 
-               << activeCenterZ/um << " µm" << G4endl;
-        G4cout << "  Active spot radius : " 
-               << fActiveRadius/mm << " mm" << G4endl;
-        G4cout << "  Active spot thick. : " 
-               << fActiveThickness/um << " µm" << G4endl;
+        G4cout << "------------------------------------------------------------" << G4endl;
+        G4cout << "  Active spot Z      : " << activeCenterZ/um << " µm" << G4endl;
+        G4cout << "  Active spot radius : " << fActiveRadius/mm << " mm" << G4endl;
+        G4cout << "  Active spot thick. : " << fActiveThickness/um << " µm" << G4endl;
     }
 
     if (fThickPaper > 0.*um) {
+        G4cout << "------------------------------------------------------------" << G4endl;
         G4cout << "  Paper top face     : " 
                << (shieldCenterZ + casingHalfZ + fThickPaper)/um << " µm" << G4endl;
     }
 
+    G4cout << "------------------------------------------------------------" << G4endl;
     G4cout << "  Requested gap      : " << fDistance_SD/mm << " mm" << G4endl;
     G4cout << "  Actual gap         : " 
            << (shieldCenterZ - casingHalfZ - detectorHalfZ)/mm << " mm" << G4endl;

@@ -4,10 +4,17 @@
 /gps/particle ion
 /gps/ion 11 22       # Z=11 (Na), A=22
 /gps/ang/type iso
-/gps/position 0 0 1.905 cm
+
+#/gps/position 0 0 1.905 cm
+/gps/pos/type Surface
+/gps/pos/shape Cylinder
+/gps/pos/radius 1.5 mm
+/gps/pos/halfz 5 um
+/gps/pos/centre 0 0 1.9436 cm
+
 /gps/energy 0 MeV
 
-/run/beamOn 10000
+/run/beamOn 100000
 
 /vis/enable
 /vis/viewer/flush

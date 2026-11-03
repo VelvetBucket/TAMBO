@@ -46,9 +46,6 @@ class DetectorConstruction : public G4VUserDetectorConstruction
 
     // Paper
     G4double fThickPaper       = 160 * um;
-
-    // Overlap check
-    G4bool fCheckOverlaps      = true;
     
 };
 
